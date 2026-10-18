@@ -63,6 +63,18 @@
 #endif
 #include <inttypes.h>
 
+#ifdef __HAIKU__
+/*
+ * Haiku's devfs has no device numbers: a node's path is its only name. What
+ * works is the ioctl interface of a node the caller opened by path (drmIoctl,
+ * drmGetVersion, drmSyncobj*, ...); the dev_t based look-ups and device
+ * enumeration find nothing.
+ */
+#define major(dev) ((void)(dev), 0)
+#define minor(dev) ((void)(dev), 0)
+#define makedev(maj, min) ((void)(maj), (void)(min), (dev_t)0)
+#endif
+
 #if defined(__FreeBSD__)
 #include <sys/param.h>
 #include <sys/pciio.h>
@@ -693,7 +705,13 @@ drmIoctl(int fd, unsigned long request, void *arg)
     int ret;
 
     do {
+#ifdef __HAIKU__
+        /* Haiku's ioctl() takes the argument size as a fourth argument; DRM
+         * request numbers carry it (<sys/ioccom.h>). */
+        ret = ioctl(fd, request, arg, IOCPARM_LEN(request));
+#else
         ret = ioctl(fd, request, arg);
+#endif
     } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
     return ret;
 }
