@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#ifdef __HAIKU__
+#include <sys/ioccom.h> /* _IOWR() */
+#endif
 #include <poll.h>
 #include <unistd.h>
 
