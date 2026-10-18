@@ -4870,6 +4870,12 @@ drm_public int drmGetDevices2(uint32_t flags, drmDevicePtr devices[],
     if (drm_device_validate_flags(flags))
         return -EINVAL;
 
+#ifdef __HAIKU__
+    /* No device enumeration (see major() above). Not an error: Haiku's errno
+     * values are negative, so -errno would be a device count. */
+    return 0;
+#endif
+
     sysdir = opendir(DRM_DIR_NAME);
     if (!sysdir)
         return -errno;
